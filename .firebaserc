@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "controlacampo-868f2",
+    "qualico-prod": "qualico-prod"
+  }
+}
