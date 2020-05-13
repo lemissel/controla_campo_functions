@@ -1,62 +1,73 @@
-const fs = require('fs');
 const storage = require('../repositories/firebase-store.repository');
+const FirestoreRepository = require('../repositories/firebase-firestore.repository');
+const vision = require('@google-cloud/vision');
+
+require('dotenv').config();
 
 class DocumentsController {
-    constructor() {}
+    constructor() {
+        this.db = new FirestoreRepository();
+    }
 
     async newDocument(documentBase64) {
 
-        let sendImageToBucket, ocrRecognizer;
+        let sendImageToBucket;
+        let OCRResult;
+        let dataFiltered;
+        let data;
+        let uid = documentBase64.originalname;
 
-        console.log('entrei')
+        // TODO: identificar se é receita ou despesa.
 
-        sendImageToBucket = await this.storeDocument(documentBase64);
-        ocrRecognizer = await this.getTextByOCR(documentBase64);
+        sendImageToBucket = this.storeDocument(documentBase64);
+        // OCRResult = await this.getTextByOCR(documentBase64);
+        // dataFiltered = await this.filterRelevantData(OCRResult);
+        // data = await this.saveTextDocumentOnDatabase(dataFiltered, uid);
+        data = await this.saveTextDocumentOnDatabase(Math.random() * 1000 * -1, uid);
 
-        return sendImageToBucket;
-
+        return data;
     }
 
     async getTextByOCR(imageBlob) {
 
-        console.log('strat')
+        const client = new vision.ImageAnnotatorClient();
+        const [result] = await client.textDetection(imageBlob.buffer);
+        const detections = result.textAnnotations;
 
-        // // TODO: OBTER a imagem
-        // let image = fs.createReadStream(imageBlob.buffer);
-        // image.on('error', (error) => {
-        //     return new Error(error + 'Something is wrong! Unable to upload at the moment.');
-        // });
+        if (result.textAnnotations.length <= 0) {
+            return null;
+        }
 
-        // image.on('finish', () => {
-        //     // The public URL can be used to directly access the file via HTTP.
-        //     console.log('finished')
-        // });
-
-        // image.end(imageBlob.buffer);
-
-        // console.log(image)
-
-        // TODO: Obter imagem
-        // TODO: executar o OCR
-        // TODO: Limpar string (Remover \N e *)
-        // TODO: Extrair o total
-
-
-        let pattern = /(Total|REAIS|PAGAR):*.*R*\$* (\d*,.\d*)/gmi;
-
-        const text = 'Total 90,99';
-        
-        let extractTotalFLoat = pattern.exec(text);
-        // let totalFloatToStore = extractTotalFloat[1];
-        
-        console.log(extractTotalFLoat);
-        return 'teste';
-
-        //return text;
+        return detections[0].description;
     }
 
-    async saveTextDocumentOnDatabase(textProceced) {
+    async filterRelevantData(text) {
+        // let pattern = /(Total|REAIS|PAGAR):*.*R*\$* (\d*,.\d*)/gmi;
+        let pattern = /(\d*\..\d*) Total|REAIS|PAGAR*/gmi;
 
+        text = text.replace(/\n/gmi,' ');
+
+        console.log(text)
+
+        let extractTotalFLoat = pattern.exec(text);
+
+
+        if(extractTotalFLoat.length >= 0 || extractTotalFLoat === null) return null;
+
+        return extractTotalFLoat[1];
+    }
+
+    async saveTextDocumentOnDatabase(textProceced, uid) {
+
+        if(textProceced !== null && uid !== null) {
+            return this.db.insert('documents', {
+                amount: textProceced,
+                timestamp: Date.now(),
+                uid: uid
+            });
+        }
+        
+        return null;
     }
 
     async storeDocument(documentBase64) {
@@ -74,6 +85,12 @@ class DocumentsController {
         return result;
     }
 
+    getDocumentsByUid(uid) {
+        return this.db.getInstance()
+            .collection('documents')
+            .where('uid', '==', uid)
+            .get();
+    }
 }
 
 module.exports = DocumentsController;

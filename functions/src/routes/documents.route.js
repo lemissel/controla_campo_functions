@@ -22,4 +22,21 @@ router.post('/file/upload', uploadMiddleware.single('file'), async (request, res
     response.json(result);
 });
 
+router.get('/:uid', async (request, response) => {
+
+    await documentsController.getDocumentsByUid(request.params.uid)
+    .then(documents => {
+
+        let documentsList = [];
+
+        documents.forEach(value => documentsList.push({
+            id: value.id,
+            data: value.data()
+        }));
+
+        return response.status(200).json(documentsList)
+    })
+    .catch(error => response.status(500).json({ error: true, message: error}));
+});
+
 module.exports = router;
