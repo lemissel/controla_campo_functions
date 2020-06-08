@@ -6,7 +6,51 @@ const DocumentsController = require('../controllers/documents.controller');
 
 const documentsController = new DocumentsController();
 
-router.get('/', (request, response) => response.send('Route Documents is done!'));
+router.get('/', async (request, response) => {
+
+
+    await documentsController.getAllDocuments()
+    .then(documents => {
+
+        let documentsList = [];
+
+        documents.forEach(value => documentsList.push({
+            id: value.id,
+            amount: value.data().amount,
+            documentPath: value.data().documentPath,
+            timestamp: value.data().timestamp._seconds,
+            status: value.data().status,
+            uid: value.data().uid
+        }));
+
+        return response.status(200).json(documentsList)
+    })
+    .catch(error => response.status(500).json({ error: true, message: error}));
+});
+
+router.get('/documents_by_status/:status', async (request, response) => {
+
+    console.log(request.params.status)
+
+
+    await documentsController.getDocumentsByStatus(request.params.status)
+    .then(documents => {
+
+        let documentsList = [];
+
+        documents.forEach(value => documentsList.push({
+            id: value.id,
+            amount: value.data().amount,
+            documentPath: value.data().documentPath,
+            timestamp: value.data().timestamp.toDate(),
+            status: value.data().status,
+            uid: value.data().uid
+        }));
+
+        return response.status(200).json(documentsList)
+    })
+    .catch(error => response.status(500).json({ error: true, message: error}));
+});
 
 router.post('/file/upload', uploadMiddleware.single('file'), async (request, response) => {
 
@@ -31,6 +75,64 @@ router.get('/:uid', async (request, response) => {
 
         documents.forEach(value => documentsList.push({
             id: value.id,
+            data: {
+                amount: value.data().amount,
+                timestamp: value.data().timestamp.toDate(),
+                uid: value.data().uid,
+                status: value.data().status,
+                documentPath: value.data().documentPath,
+            }
+        }));
+
+        // let documentsList = documents.map(document => {
+        //     return {
+        //         id: document.id,
+        //         data: document.data()
+        //     }
+        // });
+
+        return response.status(200).json(documentsList);
+    })
+    .catch(error => response.status(500).json({ error: true, message: error}));
+});
+
+router.get('/:uid/:startdate/:enddate', async (request, response) => {
+
+    await documentsController.getDocumentsByPeriod(
+        request.params.uid,
+        new Date(request.params.startdate),
+        new Date(request.params.enddate)
+    )
+    .then(documents => {
+        let documentsList = [];
+
+        documents.forEach(value => documentsList.push({
+            id: value.id,
+            data: value.data()
+        }));
+
+        return response.status(200).json(documentsList)
+    })
+    .catch(error => response.status(500).json({ error: true, message: error}));
+
+});
+
+router.post('/set-value', async (request, response) => {
+    await documentsController.setValueOfDocument(request.body.id, request.body.value)
+            .then(controllerResponse => response.status(200).json(controllerResponse))
+            .catch(error => response.status(500).json({ error: true, message: error}));
+});
+
+router.get('/status/:status', async (request, response) => {
+
+
+    await documentsController.getDocumentsByStatus(request.params.status)
+    .then(documents => {
+
+        let documentsList = [];
+
+        documents.forEach(value => documentsList.push({
+            id: value.id,
             data: value.data()
         }));
 
@@ -38,5 +140,15 @@ router.get('/:uid', async (request, response) => {
     })
     .catch(error => response.status(500).json({ error: true, message: error}));
 });
+
+router.put('/set_value', async (request, response) => {
+
+    await documentsController.setValueAndStatusOfDocument(request.body.id, request.body.amount, request.body.status)
+        
+    response.status(200).json({
+        error: false,
+        message: 'The value of amout has added. '
+    })
+})
 
 module.exports = router;

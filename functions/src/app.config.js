@@ -6,6 +6,7 @@ const morgan = require('morgan');
 
 const defaultRoute = require('../src/routes/default.route');
 const documentsRoute = require('../src/routes/documents.route');
+const usersRoute = require('../src/routes/users.route');
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.use(morgan('combined'));
 // Routes
 app.use('/', defaultRoute);
 app.use('/documents', documentsRoute);
+app.use('/users', usersRoute);
 
 module.exports = app;

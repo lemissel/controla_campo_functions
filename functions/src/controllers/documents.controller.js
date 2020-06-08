@@ -1,6 +1,7 @@
 const storage = require('../repositories/firebase-store.repository');
 const FirestoreRepository = require('../repositories/firebase-firestore.repository');
 const vision = require('@google-cloud/vision');
+const firebase = require('../firebase.config');
 
 require('dotenv').config();
 
@@ -19,14 +20,67 @@ class DocumentsController {
 
         // TODO: identificar se é receita ou despesa.
 
-        sendImageToBucket = this.storeDocument(documentBase64);
+        sendImageToBucket = await this.storeDocument(documentBase64);
+        // console.log(sendImageToBucket);
         // OCRResult = await this.getTextByOCR(documentBase64);
         // dataFiltered = await this.filterRelevantData(OCRResult);
         // data = await this.saveTextDocumentOnDatabase(dataFiltered, uid);
-        data = await this.saveTextDocumentOnDatabase(Math.random() * 1000 * -1, uid);
+        //data = await this.saveTextDocumentOnDatabase(Math.random() * 1000 * -1, uid);
+        data = await this.saveTextDocumentOnDatabase({
+            amount: null,
+            timestamp: firebase.firestore.Timestamp.fromDate(new Date()),
+            uid: uid,
+            status: 'in_progress',
+            documentPath: sendImageToBucket
+        });
 
         return data;
     }
+
+    getDocumentsByPeriod(uid, startDate, endDate) {
+        return this.db.getInstance()
+                    .collection('documents')
+                    .where('uid', '==', uid)
+                    .where('timestamp', '>=', startDate)
+                    .where('timestamp', '<', endDate)
+                    .get();
+    }
+
+    getDocumentsByUid(uid) {
+        return this.db.getInstance()
+            .collection('documents')
+            .where('uid', '==', uid)
+            .get();
+    }
+
+    getOneDocumentById(id) {
+        return this.db.getInstance()
+            .collection('documents')
+            .doc(id)
+            .get();
+    }
+
+    getDocumentsByStatus(status) {
+        return this.db.getInstance()
+            .collection('documents')
+            .where('status', '==', status)
+            .get();
+    }
+
+    getAllDocuments() {
+        return this.db.getInstance()
+            .collection('documents')
+            .get();
+    }
+
+    setValueAndStatusOfDocument(id, newValue, newStatus) {
+        return this.db.update('documents', id, { amount: newValue, status: newStatus });
+    }
+
+
+
+
+
 
     async getTextByOCR(imageBlob) {
 
@@ -57,40 +111,15 @@ class DocumentsController {
         return extractTotalFLoat[1];
     }
 
-    async saveTextDocumentOnDatabase(textProceced, uid) {
+    async saveTextDocumentOnDatabase(data) {
 
-        if(textProceced !== null && uid !== null) {
-            return this.db.insert('documents', {
-                amount: textProceced,
-                timestamp: Date.now(),
-                uid: uid
-            });
-        }
-        
-        return null;
+        return this.db.insert('documents', data);
     }
 
     async storeDocument(documentBase64) {
-
-        let result;
-
-        await storage(documentBase64)
-        // eslint-disable-next-line promise/always-return
-        .then((success) => {
-            result = { error: false, response: success };
-        }).catch((error) => {
-            result = { error: true, errorMessage: error };
-        });
-
-        return result;
+        return await storage(documentBase64);
     }
 
-    getDocumentsByUid(uid) {
-        return this.db.getInstance()
-            .collection('documents')
-            .where('uid', '==', uid)
-            .get();
-    }
 }
 
 module.exports = DocumentsController;

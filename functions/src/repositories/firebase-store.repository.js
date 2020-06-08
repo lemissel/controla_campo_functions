@@ -3,8 +3,12 @@ const {Storage} = require('@google-cloud/storage');
 
 const storage = new Storage({
     projectId: "controlacampo-868f2",
-    keyFilename: "controlacampo.json"
+    keyFilename: "./controlacampo.json"
 });
+
+// const storage = new Storage();
+
+// DON'T FORGET LOAD DE ENVIRONMENT VAR GOOGLE_APPLICATION_CREDENTIALS WITH THE PATH ABOUT YOUR .JSON CONFIGURATION FILE.
 
 const bucket = storage.bucket("gs://controlacampo-868f2.appspot.com");
 
@@ -13,7 +17,6 @@ const bucket = storage.bucket("gs://controlacampo-868f2.appspot.com");
  * @param {File} file object that will be uploaded to Google Storage
  */
 const uploadImageToStorage = (file) => {
-
 
     return new Promise((resolve, reject) => {
         if (!file) {
@@ -37,7 +40,8 @@ const uploadImageToStorage = (file) => {
 
         blobStream.on('finish', () => {
             // The public URL can be used to directly access the file via HTTP.
-            const url = format(`gs://${bucket.name}/${fileUpload.name}`);
+            // const url = format(`gs://${bucket.name}/${fileUpload.name}`);
+            const url = format(fileUpload.name);
             resolve(url);
         });
 

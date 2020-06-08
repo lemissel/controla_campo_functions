@@ -1,15 +1,9 @@
-require('dotenv').config();
-
-const admin = require('firebase-admin');
+const firebase = require('../firebase.config');
 
 module.exports = class FirestoreRepository {
     
     constructor(){
-        admin.initializeApp({
-            credential: admin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS)
-        });
-
-        this.db = admin.firestore();
+        this.db = firebase.firestore();
     }
 
     async insert(collection, values) {
