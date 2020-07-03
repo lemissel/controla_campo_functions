@@ -118,9 +118,18 @@ router.get('/:uid/:startdate/:enddate', async (request, response) => {
 });
 
 router.post('/set-value', async (request, response) => {
-    await documentsController.setValueOfDocument(request.body.id, request.body.value)
-            .then(controllerResponse => response.status(200).json(controllerResponse))
-            .catch(error => response.status(500).json({ error: true, message: error}));
+
+    await documentsController.setValueWhithoutDocument(
+        request.body.id,
+        request.body.amount,
+        request.body.status
+    )
+    .then(controllerResponse => response.status(200).json(controllerResponse))
+    .catch(error => response.status(500).json({ error: true, message: error}));
+
+    // await documentsController.setValueOfDocument(request.body.id, request.body.value)
+    //         .then(controllerResponse => response.status(200).json(controllerResponse))
+    //         .catch(error => response.status(500).json({ error: true, message: error}));
 });
 
 router.get('/status/:status', async (request, response) => {

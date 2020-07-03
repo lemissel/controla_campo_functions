@@ -1,6 +1,6 @@
 const storage = require('../repositories/firebase-store.repository');
 const FirestoreRepository = require('../repositories/firebase-firestore.repository');
-const vision = require('@google-cloud/vision');
+// const vision = require('@google-cloud/vision');
 const firebase = require('../firebase.config');
 
 require('dotenv').config();
@@ -41,8 +41,8 @@ class DocumentsController {
         return this.db.getInstance()
                     .collection('documents')
                     .where('uid', '==', uid)
-                    .where('timestamp', '>=', startDate)
-                    .where('timestamp', '<', endDate)
+                    .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(startDate))
+                    .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(endDate))
                     .get();
     }
 
@@ -77,23 +77,35 @@ class DocumentsController {
         return this.db.update('documents', id, { amount: newValue, status: newStatus });
     }
 
+    async setValueWhithoutDocument(uid, amount, status) {
+        let data = await this.saveTextDocumentOnDatabase({
+            amount: amount,
+            timestamp: firebase.firestore.Timestamp.fromDate(new Date()),
+            uid: uid,
+            status: status,
+            documentPath: null
+        });
 
-
-
-
-
-    async getTextByOCR(imageBlob) {
-
-        const client = new vision.ImageAnnotatorClient();
-        const [result] = await client.textDetection(imageBlob.buffer);
-        const detections = result.textAnnotations;
-
-        if (result.textAnnotations.length <= 0) {
-            return null;
-        }
-
-        return detections[0].description;
+        return data;
     }
+
+
+
+
+
+
+    // async getTextByOCR(imageBlob) {
+
+    //     const client = new vision.ImageAnnotatorClient();
+    //     const [result] = await client.textDetection(imageBlob.buffer);
+    //     const detections = result.textAnnotations;
+
+    //     if (result.textAnnotations.length <= 0) {
+    //         return null;
+    //     }
+
+    //     return detections[0].description;
+    // }
 
     async filterRelevantData(text) {
         // let pattern = /(Total|REAIS|PAGAR):*.*R*\$* (\d*,.\d*)/gmi;
