@@ -17,12 +17,15 @@ class DocumentsController {
         let dataFiltered;
         let data;
         let uid = documentBase64.originalname;
+        let username = documentBase64.username;
 
         // TODO: identificar se é receita ou despesa.
 
         sendImageToBucket = await this.storeDocument(documentBase64);
         // console.log(sendImageToBucket);
         // OCRResult = await this.getTextByOCR(documentBase64);
+
+        // console.log(OCRResult)
         // dataFiltered = await this.filterRelevantData(OCRResult);
         // data = await this.saveTextDocumentOnDatabase(dataFiltered, uid);
         //data = await this.saveTextDocumentOnDatabase(Math.random() * 1000 * -1, uid);
@@ -31,7 +34,8 @@ class DocumentsController {
             timestamp: firebase.firestore.Timestamp.fromDate(new Date()),
             uid: uid,
             status: 'in_progress',
-            documentPath: sendImageToBucket
+            documentPath: sendImageToBucket,
+            nome: username
         });
 
         return data;
@@ -40,6 +44,7 @@ class DocumentsController {
     getDocumentsByPeriod(uid, startDate, endDate) {
         return this.db.getInstance()
                     .collection('documents')
+                    // .where('status', '==', 'done')
                     .where('uid', '==', uid)
                     .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(startDate))
                     .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(endDate))
@@ -94,18 +99,18 @@ class DocumentsController {
 
 
 
-    // async getTextByOCR(imageBlob) {
+    async getTextByOCR(imageBlob) {
 
-    //     const client = new vision.ImageAnnotatorClient();
-    //     const [result] = await client.textDetection(imageBlob.buffer);
-    //     const detections = result.textAnnotations;
+        const client = new vision.ImageAnnotatorClient();
+        const [result] = await client.textDetection(imageBlob.buffer);
+        const detections = result.textAnnotations;
 
-    //     if (result.textAnnotations.length <= 0) {
-    //         return null;
-    //     }
+        if (result.textAnnotations.length <= 0) {
+            return null;
+        }
 
-    //     return detections[0].description;
-    // }
+        return detections[0].description;
+    }
 
     async filterRelevantData(text) {
         // let pattern = /(Total|REAIS|PAGAR):*.*R*\$* (\d*,.\d*)/gmi;
@@ -130,6 +135,20 @@ class DocumentsController {
 
     async storeDocument(documentBase64) {
         return await storage(documentBase64);
+    }
+
+    async remove(id) {
+
+        // TODO: remove image and tuple
+        
+        // const image = await this.getOneDocumentById(id);
+
+
+        return await this.db.getInstance()
+                        .collection('documents')
+                        .doc(id)
+                        .delete();
+
     }
 
 }

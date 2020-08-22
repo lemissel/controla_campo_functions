@@ -3,6 +3,7 @@ const router = express.Router();
 
 const uploadMiddleware = require('../middlewares/upload.middleware');
 const DocumentsController = require('../controllers/documents.controller');
+const { Router } = require('express');
 
 const documentsController = new DocumentsController();
 
@@ -20,7 +21,8 @@ router.get('/', async (request, response) => {
             documentPath: value.data().documentPath,
             timestamp: value.data().timestamp._seconds,
             status: value.data().status,
-            uid: value.data().uid
+            uid: value.data().uid,
+            nome: value.data().nome
         }));
 
         return response.status(200).json(documentsList)
@@ -44,7 +46,8 @@ router.get('/documents_by_status/:status', async (request, response) => {
             documentPath: value.data().documentPath,
             timestamp: value.data().timestamp.toDate(),
             status: value.data().status,
-            uid: value.data().uid
+            uid: value.data().uid,
+            nome: value.data().nome
         }));
 
         return response.status(200).json(documentsList)
@@ -57,6 +60,7 @@ router.post('/file/upload', uploadMiddleware.single('file'), async (request, res
     let fileBase64 = request.body.file;
 
     fileBase64.originalname = request.body.uid;
+    fileBase64.username = request.body.nome;
     fileBase64.bufferr = fileBase64._imageAsDataUrl.replace(/^data:image\/\w+;base64,/, "");
     fileBase64.buffer = Buffer(fileBase64.bufferr, 'base64');
     fileBase64.mimetype = fileBase64._mimeType;
@@ -81,6 +85,7 @@ router.get('/:uid', async (request, response) => {
                 uid: value.data().uid,
                 status: value.data().status,
                 documentPath: value.data().documentPath,
+                nome: value.data().nome
             }
         }));
 
@@ -108,10 +113,24 @@ router.get('/:uid/:startdate/:enddate', async (request, response) => {
 
         documents.forEach(value => documentsList.push({
             id: value.id,
-            data: value.data()
+            data: {
+                amount: value.data().amount,
+                timestamp: value.data().timestamp.toDate(),
+                uid: value.data().uid,
+                status: value.data().status,
+                documentPath: value.data().documentPath,
+                nome: value.data().nome
+            }
         }));
 
-        return response.status(200).json(documentsList)
+        // let documentsList = documents.map(document => {
+        //     return {
+        //         id: document.id,
+        //         data: document.data()
+        //     }
+        // });
+
+        return response.status(200).json(documentsList);
     })
     .catch(error => response.status(500).json({ error: true, message: error}));
 
@@ -152,12 +171,22 @@ router.get('/status/:status', async (request, response) => {
 
 router.put('/set_value', async (request, response) => {
 
-    await documentsController.setValueAndStatusOfDocument(request.body.id, request.body.amount, request.body.status)
+    await documentsController.setValueAndStatusOfDocument(request.body.id, request.body.amount, request.body.status);
         
     response.status(200).json({
         error: false,
         message: 'The value of amout has added. '
-    })
-})
+    });
+});
+
+router.delete('/remove/:id', async (request, response) => {
+
+    await documentsController.remove(request.params.id);
+
+    response.status(200).json({
+        error: 'false',
+        message: 'Tuple removed with success'
+    });
+});
 
 module.exports = router;
