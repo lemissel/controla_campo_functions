@@ -1,6 +1,6 @@
 const storage = require('../repositories/firebase-store.repository');
 const FirestoreRepository = require('../repositories/firebase-firestore.repository');
-// const vision = require('@google-cloud/vision');
+const vision = require('@google-cloud/vision');
 const firebase = require('../firebase.config');
 
 require('dotenv').config();
@@ -23,9 +23,9 @@ class DocumentsController {
 
         sendImageToBucket = await this.storeDocument(documentBase64);
         // console.log(sendImageToBucket);
-        // OCRResult = await this.getTextByOCR(documentBase64);
+        OCRResult = await this.getTextByOCR(documentBase64);
 
-        // console.log(OCRResult)
+        console.log(OCRResult)
         // dataFiltered = await this.filterRelevantData(OCRResult);
         // data = await this.saveTextDocumentOnDatabase(dataFiltered, uid);
         //data = await this.saveTextDocumentOnDatabase(Math.random() * 1000 * -1, uid);
@@ -37,6 +37,8 @@ class DocumentsController {
             documentPath: sendImageToBucket,
             nome: username
         });
+
+        data.OCRResult = OCRResult;
 
         return data;
     }
@@ -109,7 +111,10 @@ class DocumentsController {
             return null;
         }
 
-        return detections[0].description;
+        // console.log(detections[0].description)
+
+        // return detections[0].description;
+        return result;
     }
 
     async filterRelevantData(text) {

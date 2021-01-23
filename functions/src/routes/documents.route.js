@@ -59,6 +59,8 @@ router.post('/file/upload', uploadMiddleware.single('file'), async (request, res
 
     let fileBase64 = request.body.file;
 
+    console.log(request.body.uid, ' uid')
+
     fileBase64.originalname = request.body.uid;
     fileBase64.username = request.body.nome;
     fileBase64.bufferr = fileBase64._imageAsDataUrl.replace(/^data:image\/\w+;base64,/, "");
@@ -137,6 +139,8 @@ router.get('/:uid/:startdate/:enddate', async (request, response) => {
 });
 
 router.post('/set-value', async (request, response) => {
+
+        console.log('Request: ', request, request.body);
 
     await documentsController.setValueWhithoutDocument(
         request.body.id,
