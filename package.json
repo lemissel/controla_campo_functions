@@ -1,0 +1,25 @@
+{
+  "name": "controla_campo_functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "firebase-admin": "^8.11.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lemissel/controla_campo_functions.git"
+  },
+  "author": "Leandro Missel <lemissel@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lemissel/controla_campo_functions/issues"
+  },
+  "homepage": "https://github.com/lemissel/controla_campo_functions#readme"
+}
